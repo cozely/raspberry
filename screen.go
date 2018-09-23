@@ -5,6 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/cozely/raspberry/dispmanx"
+	"github.com/cozely/raspberry/egl"
 )
 
 /*
@@ -23,14 +24,16 @@ import "C"
 var screen struct {
 	width, height int32
 
-	display C.EGLDisplay
-	surface C.EGLSurface
-	context C.EGLContext
+	display egl.Display
+	surface egl.Surface
+	context egl.Context
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 func initScreen() error {
+	var err error
+
 	var ec C.int // C error codes
 	var e C.uint // C error bools
 
@@ -47,15 +50,15 @@ func initScreen() error {
 
 	// Establish a connection with the display
 
-	screen.display = C.eglGetDisplay(C.EGLNativeDisplayType(C.EGL_DEFAULT_DISPLAY))
-	if screen.display == C.EGLDisplay(C.EGL_NO_DISPLAY) {
-		return fmt.Errorf("unable to get EGL display connection")
+	screen.display, err = egl.GetDisplay(egl.DefaultDisplay)
+	if err != nil {
+		return fmt.Errorf("initScreen: %v", err)
 	}
 	checkgl()
 
-	e = C.eglInitialize(screen.display, nil, nil)
-	if e == C.EGL_FALSE {
-		return fmt.Errorf("unable to initialize EGL display")
+	_, _, err = egl.Initialize(screen.display)
+	if err != nil {
+		return fmt.Errorf("initScreen: %v", err)
 	}
 	checkgl()
 
