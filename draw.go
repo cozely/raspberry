@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"unsafe"
+
+	"github.com/cozely/raspberry/gl"
 )
 
 /*
@@ -17,7 +19,7 @@ import "C"
 ////////////////////////////////////////////////////////////////////////////////
 
 var pipeline struct {
-	program     C.GLuint
+	program     gl.Program
 	framebuffer C.GLuint
 	texture     C.GLuint
 	vbo         C.GLuint
@@ -43,50 +45,30 @@ var vertices = [...]C.GLfloat{
 	0, 0.65, 0.5, 1,
 }
 
-var logbuf [1024]C.char
-
 ////////////////////////////////////////////////////////////////////////////////
 
 func createPipeline() error {
 	// Compile and link the shaders
 
-	vs := C.glCreateShader(C.GL_VERTEX_SHADER)
-	C.ShaderSource(vs, C.CString(vshader))
-	C.glCompileShader(vs)
+	vs := gl.CreateShader(gl.VERTEX_SHADER)
+	gl.ShaderSource(vs, vshader)
+	gl.CompileShader(vs)
 	//TODO: the shader info log doesn't seem to contain any info, ever?
-	C.glGetShaderInfoLog(
-		vs,
-		C.int((unsafe.Sizeof(logbuf))),
-		nil,
-		&logbuf[0],
-	)
-	log.Printf("Vertex Shader: %s\n", C.GoString(&logbuf[0]))
+	log.Printf("Vertex Shader: %s\n", gl.GetShaderInfoLog(vs))
 	checkgl()
 
-	fs := C.glCreateShader(C.GL_FRAGMENT_SHADER)
-	C.ShaderSource(fs, C.CString(fshader))
-	C.glCompileShader(fs)
+	fs := gl.CreateShader(gl.FRAGMENT_SHADER)
+	gl.ShaderSource(fs, fshader)
+	gl.CompileShader(fs)
 	//TODO: the shader info log doesn't seem to contain any info, ever?
-	C.glGetShaderInfoLog(
-		fs,
-		C.int((unsafe.Sizeof(logbuf))),
-		nil,
-		&logbuf[0],
-	)
-	log.Printf("Fragment Shader: %s\n", C.GoString(&logbuf[0]))
+	log.Printf("Fragment Shader: %s\n", gl.GetShaderInfoLog(fs))
 	checkgl()
 
-	pipeline.program = C.glCreateProgram()
-	C.glAttachShader(pipeline.program, vs)
-	C.glAttachShader(pipeline.program, fs)
-	C.glLinkProgram(pipeline.program)
-	C.glGetProgramInfoLog(
-		pipeline.program,
-		C.int((unsafe.Sizeof(logbuf))),
-		nil,
-		&logbuf[0],
-	)
-	log.Printf("Program Link: %s\n", C.GoString(&logbuf[0]))
+	pipeline.program = gl.CreateProgram()
+	gl.AttachShader(pipeline.program, vs)
+	gl.AttachShader(pipeline.program, fs)
+	gl.LinkProgram(pipeline.program)
+	log.Printf("Program Link: %s\n", gl.GetProgramInfoLog(pipeline.program))
 	checkgl()
 
 	// Create the framebuffer
@@ -125,10 +107,13 @@ func createPipeline() error {
 		C.long(unsafe.Sizeof(vertices)),
 		unsafe.Pointer(&vertices[0]),
 		C.GL_STATIC_DRAW)
-	a := C.GLuint(C.glGetAttribLocation(pipeline.program, C.CString("vertex")))
+	a, ok := gl.GetAttribLocation(pipeline.program, "vertex")
+	if !ok {
+		log.Printf("*** unable to get location of attribute \"vertex\"")
+	}
 	checkgl()
-	C.glVertexAttribPointer(a, 4, C.GL_FLOAT, 0, 16, nil)
-	C.glEnableVertexAttribArray(a)
+	gl.VertexAttribPointer(a, 4, gl.FLOAT, false, 16, 0)
+	gl.EnableVertexAttribArray(a)
 	checkgl()
 
 	return nil
@@ -140,7 +125,7 @@ func drawTriangle() error {
 	C.glClearColor(0.99, 0.97, 0.90, 1)
 	C.glClear(C.GL_COLOR_BUFFER_BIT)
 
-	C.glUseProgram(pipeline.program)
+	gl.UseProgram(pipeline.program)
 	C.glBindBuffer(C.GL_ARRAY_BUFFER, pipeline.vbo)
 	C.glDrawArrays(C.GL_TRIANGLES, 0, 3)
 
