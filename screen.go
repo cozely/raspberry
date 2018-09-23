@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"unsafe"
+
+	"github.com/cozely/raspberry/dispmanx"
 )
 
 /*
@@ -94,30 +96,30 @@ func initScreen() error {
 
 	// Create an element (i.e. layer/sprite) with DispmanX
 
-	dpy := C.vc_dispmanx_display_open(0)
-	upd := C.vc_dispmanx_update_start(0)
+	dpy := dispmanx.DisplayOpen(0)
+	upd := dispmanx.UpdateStart(0)
 
-	src := C.VC_RECT_T{
-		x: 0, y: 0,
-		width:  C.int(screen.width << 16),
-		height: C.int(screen.height << 16),
+	src := dispmanx.Rect{
+		X: 0, Y: 0,
+		Width:  screen.width << 16,
+		Height: screen.height << 16,
 	}
-	dst := C.VC_RECT_T{
-		x: 0, y: 0,
-		width:  C.int(screen.width),
-		height: C.int(screen.height),
+	dst := dispmanx.Rect{
+		X: 0, Y: 0,
+		Width:  screen.width,
+		Height: screen.height,
 	}
-	elm := C.vc_dispmanx_element_add(upd, dpy,
-		0, &dst, 0, &src, C.DISPMANX_PROTECTION_NONE,
+	elm := dispmanx.ElementAdd(upd, dpy,
+		0, dst, 0, src, dispmanx.ProtectionNone,
 		nil, nil, 0)
 
-	C.vc_dispmanx_update_submit_sync(upd)
+	dispmanx.UpdateSubmitSync(upd)
 	checkgl()
 
 	// Create an EGL window surface
 
 	w := C.EGL_DISPMANX_WINDOW_T{
-		element: elm,
+		element: C.uint(elm),
 		width:   C.int(screen.width),
 		height:  C.int(screen.height),
 	}
