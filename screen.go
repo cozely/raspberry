@@ -19,7 +19,7 @@ import "C"
 ////////////////////////////////////////////////////////////////////////////////
 
 var screen struct {
-	width, height uint32
+	width, height int32
 
 	display C.EGLDisplay
 	surface C.EGLSurface

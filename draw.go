@@ -7,22 +7,13 @@ import (
 	"github.com/cozely/raspberry/gl"
 )
 
-/*
-#include "GLES2/gl2.h"
-static inline void ShaderSource(GLuint s, const char *b) {
-	const GLchar*bb[] = {b};
-	glShaderSource(s, 1, bb, NULL);
-}
-*/
-import "C"
-
 ////////////////////////////////////////////////////////////////////////////////
 
 var pipeline struct {
 	program     gl.Program
-	framebuffer C.GLuint
-	texture     C.GLuint
-	vbo         C.GLuint
+	// framebuffer C.GLuint
+	// texture     C.GLuint
+	vbo         gl.Buffer
 }
 
 var vshader = `
@@ -38,7 +29,7 @@ void main(void) {
 }
 `
 
-var vertices = [...]C.GLfloat{
+var vertices = [...]float32{
 	0, 0.65, 0.5, 1,
 	-0.65, -0.475, 0.5, 1,
 	0.65, -0.475, 0.5, 1,
@@ -98,15 +89,13 @@ func createPipeline() error {
 	// C.glBindFramebuffer(C.GL_FRAMEBUFFER, C.GLuint(0))
 	// checkgl()
 
-	C.glViewport(0, 0, C.int(screen.width), C.int(screen.height))
+	gl.Viewport(0, 0, screen.width, screen.height)
 
-	C.glGenBuffers(1, &pipeline.vbo)
+	pipeline.vbo = gl.GenBuffer()
 	checkgl()
-	C.glBindBuffer(C.GL_ARRAY_BUFFER, pipeline.vbo)
-	C.glBufferData(C.GL_ARRAY_BUFFER,
-		C.long(unsafe.Sizeof(vertices)),
-		unsafe.Pointer(&vertices[0]),
-		C.GL_STATIC_DRAW)
+	gl.BindBuffer(gl.ARRAY_BUFFER, pipeline.vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, unsafe.Sizeof(vertices),
+		unsafe.Pointer(&vertices[0]), gl.STATIC_DRAW)
 	a, ok := gl.GetAttribLocation(pipeline.program, "vertex")
 	if !ok {
 		log.Printf("*** unable to get location of attribute \"vertex\"")
@@ -122,16 +111,16 @@ func createPipeline() error {
 ////////////////////////////////////////////////////////////////////////////////
 
 func drawTriangle() error {
-	C.glClearColor(0.99, 0.97, 0.90, 1)
-	C.glClear(C.GL_COLOR_BUFFER_BIT)
+	gl.ClearColor(0.99, 0.97, 0.90, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	gl.UseProgram(pipeline.program)
-	C.glBindBuffer(C.GL_ARRAY_BUFFER, pipeline.vbo)
-	C.glDrawArrays(C.GL_TRIANGLES, 0, 3)
+	gl.BindBuffer(gl.ARRAY_BUFFER, pipeline.vbo)
+	gl.DrawArrays(gl.TRIANGLES, 0, 3)
 
-	C.glBindBuffer(C.GL_ARRAY_BUFFER, 0)
-	C.glFlush()
-	C.glFinish()
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.Flush()
+	gl.Finish() // TODO: necessary?
 
 	swapBuffers()
 	return nil

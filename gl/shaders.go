@@ -22,9 +22,6 @@ type Shader uint32
 // A Program object
 type Program uint32
 
-// Attrib is a shader attribute location
-type Attrib uint32
-
 var logbuf [1024]C.char
 
 ////////////////////////////////////////////////////////////////////////////////
