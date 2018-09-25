@@ -111,7 +111,7 @@ func initScreen() error {
 		Height: screen.height,
 	}
 	elm := dispmanx.ElementAdd(upd, dpy,
-		0, dst, 0, src, dispmanx.ProtectionNone,
+		0, dst, 0, src, dispmanx.PROTECTION_NONE,
 		nil, nil, 0)
 
 	dispmanx.UpdateSubmitSync(upd)
