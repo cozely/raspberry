@@ -5,16 +5,10 @@ import (
 	"time"
 )
 
-/*
-#cgo CFLAGS: -I/opt/vc/include
-#cgo LDFLAGS: -L/opt/vc/lib -lbcm_host -lbrcmEGL -lbrcmGLESv2
-*/
-import "C"
-
 ////////////////////////////////////////////////////////////////////////////////
 
 func main() {
-	log.SetFlags(log.Lshortfile|log.Ltime|log.Lmicroseconds)
+	log.SetFlags(log.Lshortfile | log.Ltime | log.Lmicroseconds)
 
 	err := initScreen()
 	if err != nil {

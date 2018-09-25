@@ -2,22 +2,11 @@ package main
 
 import (
 	"fmt"
-	"unsafe"
 
+	"github.com/cozely/raspberry/bcm"
 	"github.com/cozely/raspberry/dispmanx"
 	"github.com/cozely/raspberry/egl"
 )
-
-/*
-#cgo CFLAGS: -I/opt/vc/include
-#cgo LDFLAGS: -L/opt/vc/lib -lbcm_host -lbrcmEGL -lbrcmGLESv2
-
-#include "bcm_host.h"
-#include "GLES2/gl2.h"
-#include "EGL/egl.h"
-#include "EGL/eglext.h"
-*/
-import "C"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -34,17 +23,11 @@ var screen struct {
 func initScreen() error {
 	var err error
 
-	var ec C.int // C error codes
+	bcm.HostInit()
 
-	C.bcm_host_init() //TODO: is there any error checking?
-
-	ec = C.graphics_get_display_size(
-		0,
-		(*C.uint32_t)(unsafe.Pointer(&screen.width)),
-		(*C.uint32_t)(unsafe.Pointer(&screen.height)),
-	)
-	if ec != 0 {
-		return fmt.Errorf("unable to get display size (error code %d)", ec)
+	screen.width, screen.height, err = bcm.GetDisplaySize(0)
+	if err != nil {
+		return fmt.Errorf("screenInit: %v", err)
 	}
 
 	// Establish a connection with the display
@@ -121,8 +104,8 @@ func initScreen() error {
 
 	w := dispmanx.Window{
 		Element: elm,
-		Width:   int32(screen.width),
-		Height:  int32(screen.height),
+		Width:   screen.width,
+		Height:  screen.height,
 	}
 	screen.surface, err = egl.CreateWindowSurface(screen.display, conf[0], &w, nil)
 	if err != nil {

@@ -41,3 +41,10 @@ func Flush() {
 func Viewport(x, y, width, height int32) {
 	C.glViewport(C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height))
 }
+
+// GetError returns error information
+//
+// http://docs.gl/es2/glGetError
+func GetError() Enum {
+	return Enum(C.glGetError())
+}

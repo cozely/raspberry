@@ -4,17 +4,14 @@ import (
 	"log"
 	"path"
 	"runtime"
-)
 
-/*
-#include "GLES2/gl2.h"
-*/
-import "C"
+	"github.com/cozely/raspberry/gl"
+)
 
 ////////////////////////////////////////////////////////////////////////////////
 
 func checkgl() {
-	e := C.glGetError()
+	e := gl.GetError()
 	if e != 0 {
 		_, f, l, ok := runtime.Caller(1)
 		if !ok {
