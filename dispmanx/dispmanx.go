@@ -1,10 +1,13 @@
 package dispmanx
 
+import (
+	"unsafe"
+)
+
 /*
 #include "bcm_host.h"
 */
 import "C"
-import "unsafe"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -17,7 +20,6 @@ type ElementHandle uint32
 type ResourceHandle uint32
 
 const NoHandle = 0
-
 
 type Protection uint32
 

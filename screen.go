@@ -35,7 +35,6 @@ func initScreen() error {
 	var err error
 
 	var ec C.int // C error codes
-	var e C.uint // C error bools
 
 	C.bcm_host_init() //TODO: is there any error checking?
 
@@ -50,7 +49,7 @@ func initScreen() error {
 
 	// Establish a connection with the display
 
-	screen.display, err = egl.GetDisplay(egl.DefaultDisplay)
+	screen.display, err = egl.GetDisplay(egl.DEFAULT_DISPLAY)
 	if err != nil {
 		return fmt.Errorf("initScreen: %v", err)
 	}
@@ -64,36 +63,35 @@ func initScreen() error {
 
 	// Create and configure an EGL context
 
-	var conf C.EGLConfig
-
-	afb := [...]C.EGLint{
-		C.EGL_RED_SIZE, 8,
-		C.EGL_GREEN_SIZE, 8,
-		C.EGL_BLUE_SIZE, 8,
-		C.EGL_SURFACE_TYPE, C.EGL_WINDOW_BIT,
-		C.EGL_NONE,
+	afb := []egl.Int{
+		egl.RED_SIZE, 8,
+		egl.GREEN_SIZE, 8,
+		egl.BLUE_SIZE, 8,
+		egl.SURFACE_TYPE, egl.WINDOW_BIT,
+		egl.NONE,
 	}
-	var nc C.EGLint
-	e = C.eglChooseConfig(screen.display, &afb[0], &conf, 1, &nc)
-	if e == C.EGL_FALSE {
-		return fmt.Errorf("unable to choose EGL framebuffer configuration")
+	conf, err := egl.ChooseConfig(screen.display, afb)
+	if err != nil {
+		return fmt.Errorf("initScreen: %v", err)
 	}
-	checkgl()
-
-	e = C.eglBindAPI(C.EGL_OPENGL_ES_API)
-	if e == C.EGL_FALSE {
-		return fmt.Errorf("unable to bind OpenGL ES API")
+	if len(conf) == 0 {
+		return fmt.Errorf("initScreen: no framebuffer configuration available")
 	}
 	checkgl()
 
-	a := [...]C.EGLint{
-		C.EGL_CONTEXT_CLIENT_VERSION, 2,
-		C.EGL_NONE,
+	err = egl.BindAPI(egl.OPENGL_ES_API)
+	if err != nil {
+		return fmt.Errorf("initScreen: %v", err)
 	}
-	screen.context = C.eglCreateContext(screen.display, conf,
-		C.EGLContext(C.EGL_NO_CONTEXT), &a[0])
-	if screen.context == C.EGLContext(C.EGL_NO_CONTEXT) {
-		return fmt.Errorf("unable to create EGL context")
+	checkgl()
+
+	a := []egl.Int{
+		egl.CONTEXT_CLIENT_VERSION, 2,
+		egl.NONE,
+	}
+	screen.context, err = egl.CreateContext(screen.display, conf[0], egl.NO_CONTEXT, a)
+	if err != nil {
+		return fmt.Errorf("initScreen: %v", err)
 	}
 	checkgl()
 
@@ -121,21 +119,20 @@ func initScreen() error {
 
 	// Create an EGL window surface
 
-	w := C.EGL_DISPMANX_WINDOW_T{
-		element: C.uint(elm),
-		width:   C.int(screen.width),
-		height:  C.int(screen.height),
+	w := dispmanx.Window{
+		Element: elm,
+		Width:   int32(screen.width),
+		Height:  int32(screen.height),
 	}
-	screen.surface = C.eglCreateWindowSurface(screen.display, conf,
-		C.EGLNativeWindowType(unsafe.Pointer(&w)), nil)
-	if screen.surface == C.EGLSurface(C.EGL_NO_SURFACE) {
-		return fmt.Errorf("unable to create EGL window surface")
+	screen.surface, err = egl.CreateWindowSurface(screen.display, conf[0], &w, nil)
+	if err != nil {
+		return fmt.Errorf("screenInit: %v", err)
 	}
 	checkgl()
 
-	e = C.eglMakeCurrent(screen.display, screen.surface, screen.surface, screen.context)
-	if e == C.EGL_FALSE {
-		return fmt.Errorf("unable to make EGL context current")
+	err = egl.MakeCurrent(screen.display, screen.surface, screen.surface, screen.context)
+	if err != nil {
+		return fmt.Errorf("screenInit: %v", err)
 	}
 	checkgl()
 
@@ -145,5 +142,5 @@ func initScreen() error {
 ////////////////////////////////////////////////////////////////////////////////
 
 func swapBuffers() {
-	C.eglSwapBuffers(screen.display, screen.surface)
+	egl.SwapBuffers(screen.display, screen.surface)
 }
