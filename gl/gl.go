@@ -241,11 +241,50 @@ func GetAttribLocation(p Program, name string) (a Attrib, ok bool) {
 	return Attrib(aa), true
 }
 
+// GetBooleanv returns the value or values of a selected parameter.
+//
+// http://docs.gl/es2/glGet
+func GetBooleanv(pname Enum, dst []bool) {
+	b := make([]C.GLboolean, len(dst))
+	C.glGetBooleanv(C.GLenum(pname), &b[0])
+	for i := range dst {
+		dst[i] = b[i] == C.GL_TRUE
+	}
+}
+
 // GetError returns error information
 //
 // http://docs.gl/es2/glGetError
 func GetError() Enum {
 	return Enum(C.glGetError())
+}
+
+// GetFloatv returns the value or values of a selected parameter.
+//
+// http://docs.gl/es2/glGet
+func GetFloatv(pname Enum, dst []float32) {
+	C.glGetFloatv(C.GLenum(pname), (*C.GLfloat)(&dst[0]))
+}
+
+// GetIntegerv returns the value or values of a selected parameter.
+//
+// http://docs.gl/es2/glGet
+func GetIntegerv(pname Enum, dst []int32) {
+	C.glGetIntegerv(C.GLenum(pname), (*C.GLint)(&dst[0]))
+}
+
+// PixelStorei sets pixel storage modes.
+//
+// http://docs.gl/es2/glPixelStorei
+func PixelStorei(pname Enum, param int32) {
+	C.glPixelStorei(C.GLenum(pname), C.GLint(param))
+}
+
+// PolygonOffset sets the scale and units used to calculate depth values.
+//
+// http://docs.gl/es2/glPolygonOffset
+func PolygonOffset(factor, units float32) {
+	C.glPolygonOffset(C.GLfloat(factor), C.GLfloat(units))
 }
 
 // GetProgramInfoLog returns the information log for a program object.
@@ -261,6 +300,17 @@ func GetProgramInfoLog(p Program) string {
 	return C.GoString(&logbuf[0])
 }
 
+// SampleCoverage specifies multisample coverage parameters.
+//
+// http://docs.gl/es2/glSampleCoverage
+func SampleCoverage(value float32, invert bool) {
+	b := C.GL_FALSE
+	if invert {
+		b = C.GL_TRUE
+	}
+	C.glSampleCoverage(C.GLclampf(value), C.GLboolean(b))
+}
+
 // GetShaderInfoLog returns the information log for a shader object.
 //
 // http://docs.gl/es2/glGetShaderInfoLog
@@ -272,6 +322,28 @@ func GetShaderInfoLog(s Shader) string {
 		&logbuf[0],
 	)
 	return C.GoString(&logbuf[0])
+}
+
+// Hint specifies implementation-specific hints.
+//
+// http://docs.gl/es2/glHint
+func Hint(target, mode Enum) {
+	C.glHint(C.GLenum(target), C.GLenum(mode))
+}
+
+// IsEnabled tests whether a capability is enabled.
+//
+// http://docs.gl/es2/glIsEnabled
+func IsEnabled(cap Enum) bool {
+	r := C.glIsEnabled(C.GLenum(cap))
+	return r == C.GL_TRUE
+}
+
+// LineWidth specifies the width of rasterized lines.
+//
+// http://docs.gl/es2/glLineWidth
+func LineWidth(w float32) {
+	C.glLineWidth(C.GLfloat(w))
 }
 
 // LinkProgram links a program object.
