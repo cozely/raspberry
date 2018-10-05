@@ -95,7 +95,7 @@ func createPipeline() error {
 	checkgl()
 	gl.BindBuffer(gl.ARRAY_BUFFER, pipeline.vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, unsafe.Sizeof(vertices),
-		unsafe.Pointer(&vertices[0]), gl.STATIC_DRAW)
+		(*byte)(unsafe.Pointer(&vertices[0])), gl.STATIC_DRAW)
 	a, ok := gl.GetAttribLocation(pipeline.program, "vertex")
 	if !ok {
 		log.Printf("*** unable to get location of attribute \"vertex\"")

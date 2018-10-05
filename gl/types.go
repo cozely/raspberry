@@ -13,3 +13,6 @@ type Program uint32
 
 // A Shader object
 type Shader uint32
+
+// A Texture object
+type Texture uint32

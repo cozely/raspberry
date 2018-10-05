@@ -20,6 +20,13 @@ var logbuf [1024]C.char
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// ActiveTexture selects active texture unit.
+//
+// http://docs.gl/es2/glActiveTexture
+func ActiveTexture(target Enum) {
+	C.glActiveTexture(C.GLenum(target))
+}
+
 // AttachShader attaches a shader object to a program object.
 //
 // http://docs.gl/es2/glAttachShader
@@ -32,6 +39,13 @@ func AttachShader(p Program, s Shader) {
 // http://docs.gl/es2/glBindBuffer
 func BindBuffer(target Enum, b Buffer) {
 	C.glBindBuffer(C.GLenum(target), C.GLuint(b))
+}
+
+// BindTexture binds a named texture to a texturing target.
+//
+// http://docs.gl/es2/glBindTexture
+func BindTexture(target Enum, t Texture) {
+	C.glBindTexture(C.GLenum(target), C.GLuint(t))
 }
 
 // BlendColor sets the blend color.
@@ -76,8 +90,8 @@ func BlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha Enum) {
 // BufferData creates and initializes a buffer object's data store.
 //
 // http://docs.gl/es2/glBufferData
-func BufferData(target Enum, size uintptr, data unsafe.Pointer, usage Enum) {
-	C.glBufferData(C.GLenum(target), C.GLsizeiptr(size), data,
+func BufferData(target Enum, size uintptr, data *byte, usage Enum) {
+	C.glBufferData(C.GLenum(target), C.GLsizeiptr(size), unsafe.Pointer(data),
 		C.GLenum(usage))
 }
 
@@ -121,6 +135,30 @@ func ColorMask(red, green, blue, alpha bool) {
 // http://docs.gl/es2/glCompileShader
 func CompileShader(s Shader) {
 	C.glCompileShader(C.GLuint(s))
+}
+
+// CompressedTexImage2D specifies a two-dimensional texture image in a
+// compressed format.
+//
+// http://docs.gl/es2/glCompressedTexImage2D
+func CompressedTexImage2D(
+	target Enum,
+	level int32,
+	internalFormat Enum,
+	width, height int32,
+	border int32,
+	imageSize int32,
+	data *byte,
+) {
+	C.glCompressedTexImage2D(
+		C.GLenum(target),
+		C.GLint(level),
+		C.GLenum(internalFormat),
+		C.GLsizei(width), C.GLsizei(height),
+		C.GLint(border),
+		C.GLsizei(imageSize),
+		unsafe.Pointer(data),
+	)
 }
 
 // CreateProgram creates a program object.
@@ -311,6 +349,13 @@ func GetShaderInfoLog(s Shader) string {
 		&logbuf[0],
 	)
 	return C.GoString(&logbuf[0])
+}
+
+// GetString returns a string describing the current GL connection.
+//
+// http://docs.gl/es2/glGetString
+func GetString(name Enum) string {
+	return C.GoString((*C.char)(C.glGetString(C.GLenum(name))))
 }
 
 // Hint specifies implementation-specific hints.
