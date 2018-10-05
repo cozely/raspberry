@@ -300,17 +300,6 @@ func GetProgramInfoLog(p Program) string {
 	return C.GoString(&logbuf[0])
 }
 
-// SampleCoverage specifies multisample coverage parameters.
-//
-// http://docs.gl/es2/glSampleCoverage
-func SampleCoverage(value float32, invert bool) {
-	b := C.GL_FALSE
-	if invert {
-		b = C.GL_TRUE
-	}
-	C.glSampleCoverage(C.GLclampf(value), C.GLboolean(b))
-}
-
 // GetShaderInfoLog returns the information log for a shader object.
 //
 // http://docs.gl/es2/glGetShaderInfoLog
@@ -353,11 +342,75 @@ func LinkProgram(p Program) {
 	C.glLinkProgram(C.GLuint(p))
 }
 
+// SampleCoverage specifies multisample coverage parameters.
+//
+// http://docs.gl/es2/glSampleCoverage
+func SampleCoverage(value float32, invert bool) {
+	b := C.GL_FALSE
+	if invert {
+		b = C.GL_TRUE
+	}
+	C.glSampleCoverage(C.GLclampf(value), C.GLboolean(b))
+}
+
+// Scissor defines the scissor box
+//
+// http://docs.gl/es2/glScissor
+func Scissor(x, y, width, height int32) {
+	C.glScissor(C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height))
+}
+
 // ShaderSource replaces the source code in a shader object.
 //
 // http://docs.gl/es2/glShaderSource
 func ShaderSource(s Shader, source string) {
 	C.ShaderSource(C.GLuint(s), C.CString(source))
+}
+
+// StencilFunc sets front and back function and reference value for stencil
+// testing.
+//
+// http://docs.gl/es2/glStencilFunc
+func StencilFunc(fn Enum, ref int32, mask uint32) {
+	C.glStencilFunc(C.GLenum(fn), C.GLint(ref), C.GLuint(mask))
+}
+
+// StencilFuncSeparate sets front and/or back function and reference value for
+// stencil testing.
+//
+// http://docs.gl/es2/glStencilFuncSeparate
+func StencilFuncSeparate(face Enum, fn Enum, ref int32, mask uint32) {
+	C.glStencilFuncSeparate(C.GLenum(face), C.GLenum(fn), C.GLint(ref), C.GLuint(mask))
+}
+
+// StencilMask controls the front and back writing of individual bits in the
+// stencil planes.
+//
+// http://docs.gl/es2/glStencilMask
+func StencilMask(mask uint32) {
+	C.glStencilMask(C.GLuint(mask))
+}
+
+// StencilMaskSeparate controls the front and/or back writing of individual bits
+// in the stencil planes.
+//
+// http://docs.gl/es2/glStencilMask
+func StencilMaskSeparate(face Enum, mask uint32) {
+	C.glStencilMaskSeparate(C.GLenum(face), C.GLuint(mask))
+}
+
+// StencilOp sets front and back stencil test actions.
+//
+// http://docs.gl/es2/glStencilOp
+func StencilOp(sfail, dpfail, dppass Enum) {
+	C.glStencilOp(C.GLenum(sfail), C.GLenum(dpfail), C.GLenum(dppass))
+}
+
+// StencilOpSeparate sets front and back stencil test actions.
+//
+// http://docs.gl/es2/glStencilOp
+func StencilOpSeparate(face Enum, sfail, dpfail, dppass Enum) {
+	C.glStencilOpSeparate(C.GLenum(face), C.GLenum(sfail), C.GLenum(dpfail), C.GLenum(dppass))
 }
 
 // UseProgram installs a program object as part of current rendering state.
