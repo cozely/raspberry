@@ -16,3 +16,6 @@ type Shader uint32
 
 // A Texture object
 type Texture uint32
+
+// Uniform is a shader uniform location
+type Uniform int32

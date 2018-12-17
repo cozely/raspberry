@@ -34,6 +34,14 @@ func AttachShader(p Program, s Shader) {
 	C.glAttachShader(C.GLuint(p), C.GLuint(s))
 }
 
+// BindAttribLocation associates a generic vertex attribute index with a named
+// attribute variable.
+//
+// http://docs.gl/es2/glBindAttribLocation
+func BindAttribLocation(p Program, index uint32, name string) {
+	C.glBindAttribLocation(C.GLuint(p), C.GLuint(index), C.CString(name))
+}
+
 // BindBuffer binds a named buffer object.
 //
 // http://docs.gl/es2/glBindBuffer
@@ -113,7 +121,22 @@ func Clear(mask Enum) {
 //
 // http://docs.gl/es2/glClearColor
 func ClearColor(red, green, blue, alpha float32) {
-	C.glClearColor(C.GLclampf(red), C.GLclampf(green), C.GLclampf(blue), C.GLclampf(alpha))
+	C.glClearColor(C.GLclampf(red), C.GLclampf(green), C.GLclampf(blue),
+		C.GLclampf(alpha))
+}
+
+// ClearDepthf specifies the clear value for the depth buffer.
+//
+// http://docs.gl/es2/glClearDepthf
+func ClearDepthf(depth float32) {
+	C.glClearDepthf(C.GLclampf(depth))
+}
+
+// ClearStencil specifies the clear value for the stencil buffer.
+//
+// http://docs.gl/es2/glClearStencil
+func ClearStencil(s int32) {
+	C.glClearStencil(C.GLint(s))
 }
 
 // ColorMask enables and disables writing of frame buffer color components.
@@ -251,6 +274,27 @@ func CreateShader(shaderType Enum) Shader {
 // http://docs.gl/es2/glCullFace
 func CullFace(mode Enum) {
 	C.glCullFace(C.GLenum(mode))
+}
+
+// DeleteProgram deletes a program object.
+//
+// http://docs.gl/es2/glDeleteProgram
+func DeleteProgram(p Program) {
+	C.glDeleteProgram(C.GLuint(p))
+}
+
+// DeleteShader deletes a shader object.
+//
+// http://docs.gl/es2/glDeleteShader
+func DeleteShader(s Shader) {
+	C.glDeleteShader(C.GLuint(s))
+}
+
+// DetachShader detaches a shader object from a program object.
+//
+// http://docs.gl/es2/glDetachShader
+func DetachShader(p Program, s Shader) {
+	C.glDetachShader(C.GLuint(p), C.GLuint(s))
 }
 
 // DeleteTextures deletes named textures.
@@ -449,6 +493,27 @@ func GetTexParameterfv(target Enum, pname Enum) []float32 {
 	return v
 }
 
+// GetUniformfv returns the value of a float uniform variable.
+//
+// http://docs.gl/es2/glGetUniform
+func GetUniformfv(p Program, u Uniform, dst []float32) {
+	C.glGetUniformfv(C.GLuint(p), C.GLint(u), (*C.GLfloat)(&dst[0]))
+}
+
+// GetUniformiv returns the value of an integer uniform variable.
+//
+// http://docs.gl/es2/glGetUniform
+func GetUniformiv(p Program, u Uniform, dst []int32) {
+	C.glGetUniformiv(C.GLuint(p), C.GLint(u), (*C.GLint)(&dst[0]))
+}
+
+// GetUniformLocation returns the location of a uniform variable.
+//
+// http://docs.gl/es2/glGetUniformLocation
+func GetUniformLocation(p Program, name string) Uniform {
+	return Uniform(C.glGetUniformLocation(C.GLuint(p), C.CString(name)))
+}
+
 // Hint specifies implementation-specific hints.
 //
 // http://docs.gl/es2/glHint
@@ -497,6 +562,25 @@ func PixelStorei(pname Enum, param int32) {
 // http://docs.gl/es2/glPolygonOffset
 func PolygonOffset(factor, units float32) {
 	C.glPolygonOffset(C.GLfloat(factor), C.GLfloat(units))
+}
+
+// ReadPixels reads a block of pixels from the frame buffer.
+//
+// http://docs.gl/es2/glReadPixels
+func ReadPixels(
+	x, y int32,
+	width, height int32,
+	format Enum,
+	pixeltype Enum,
+	data []byte,
+) {
+	C.glReadPixels(
+		C.GLint(x), C.GLint(y),
+		C.GLsizei(width), C.GLsizei(height),
+		C.GLenum(format),
+		C.GLenum(pixeltype),
+		unsafe.Pointer(&data[0]),
+	)
 }
 
 // SampleCoverage specifies multisample coverage parameters.
@@ -694,6 +778,198 @@ func TexSubImage2DUnsafe(
 		C.GLenum(texeltype),
 		data,
 	)
+}
+
+// Uniform1f specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform1f(u Uniform, v0 float32) {
+	C.glUniform1f(C.GLint(u), C.GLfloat(v0))
+}
+
+// Uniform1fv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform1fv(u Uniform, values []float32) {
+	C.glUniform1fv(C.GLint(u), C.GLsizei(len(values)),
+		(*C.GLfloat)(&values[0]))
+}
+
+// Uniform1i specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform1i(u Uniform, v0 int32) {
+	C.glUniform1i(C.GLint(u), C.GLint(v0))
+}
+
+// Uniform1iv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform1iv(u Uniform, values []int32) {
+	C.glUniform2iv(C.GLint(u), C.GLsizei(len(values)),
+		(*C.GLint)(&values[0]))
+}
+
+// Uniform2f specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform2f(u Uniform, v0, v1 float32) {
+	C.glUniform2f(C.GLint(u), C.GLfloat(v0), C.GLfloat(v1))
+}
+
+// Uniform2fv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform2fv(u Uniform, values [][2]float32) {
+	C.glUniform2fv(C.GLint(u), C.GLsizei(2*len(values)),
+		(*C.GLfloat)(&values[0][0]))
+}
+
+// Uniform2i specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform2i(u Uniform, v0, v1 int32) {
+	C.glUniform2i(C.GLint(u), C.GLint(v0), C.GLint(v1))
+}
+
+// Uniform2iv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform2iv(u Uniform, values [][2]int32) {
+	C.glUniform2iv(C.GLint(u), C.GLsizei(2*len(values)),
+		(*C.GLint)(&values[0][0]))
+}
+
+// Uniform3f specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform3f(u Uniform, v0, v1, v2 float32) {
+	C.glUniform3f(C.GLint(u), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2))
+}
+
+// Uniform3fv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform3fv(u Uniform, values [][3]float32) {
+	C.glUniform3fv(C.GLint(u), C.GLsizei(3*len(values)),
+		(*C.GLfloat)(&values[0][0]))
+}
+
+// Uniform3i specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform3i(u Uniform, v0, v1, v2 int32) {
+	C.glUniform3i(C.GLint(u), C.GLint(v0), C.GLint(v1), C.GLint(v2))
+}
+
+// Uniform3iv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform3iv(u Uniform, values [][3]int32) {
+	C.glUniform3iv(C.GLint(u), C.GLsizei(3*len(values)),
+		(*C.GLint)(&values[0][0]))
+}
+
+// Uniform4f specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform4f(u Uniform, v0, v1, v2, v3 float32) {
+	C.glUniform4f(C.GLint(u), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2),
+		C.GLfloat(v3))
+}
+
+// Uniform4fv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform4fv(u Uniform, values [][4]float32) {
+	C.glUniform4fv(C.GLint(u), C.GLsizei(4*len(values)),
+		(*C.GLfloat)(&values[0][0]))
+}
+
+// Uniform4i specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform4i(u Uniform, v0, v1, v2, v3 int32) {
+	C.glUniform4i(C.GLint(u), C.GLint(v0), C.GLint(v1), C.GLint(v2),
+		C.GLint(v3))
+}
+
+// Uniform4iv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func Uniform4iv(u Uniform, values [][4]int32) {
+	C.glUniform4iv(C.GLint(u), C.GLsizei(4*len(values)),
+		(*C.GLint)(&values[0][0]))
+}
+
+// UniformMatrix2f specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func UniformMatrix2f(u Uniform, values [2][2]float32) {
+	C.glUniformMatrix4fv(C.GLint(u), C.GLsizei(2*2), C.GL_FALSE,
+		(*C.GLfloat)(&values[0][0]))
+}
+
+// UniformMatrix2fv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func UniformMatrix2fv(u Uniform, values [][2][2]float32) {
+	C.glUniformMatrix2fv(C.GLint(u), C.GLsizei(2*2*len(values)), C.GL_FALSE,
+		(*C.GLfloat)(&values[0][0][0]))
+}
+
+// UniformMatrix3f specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func UniformMatrix3f(u Uniform, values [3][3]float32) {
+	C.glUniformMatrix4fv(C.GLint(u), C.GLsizei(3*3), C.GL_FALSE,
+		(*C.GLfloat)(&values[0][0]))
+}
+
+// UniformMatrix3fv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func UniformMatrix3fv(u Uniform, values [][3][3]float32) {
+	C.glUniformMatrix3fv(C.GLint(u), C.GLsizei(3*3*len(values)), C.GL_FALSE,
+		(*C.GLfloat)(&values[0][0][0]))
+}
+
+// UniformMatrix4f specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func UniformMatrix4f(u Uniform, values [4][4]float32) {
+	C.glUniformMatrix4fv(C.GLint(u), C.GLsizei(4*4), C.GL_FALSE,
+		(*C.GLfloat)(&values[0][0]))
+}
+
+// UniformMatrix4fv specifies the value of a uniform variable for the current program
+// object.
+//
+// http://docs.gl/es2/glUniform
+func UniformMatrix4fv(u Uniform, values [][4][4]float32) {
+	C.glUniformMatrix4fv(C.GLint(u), C.GLsizei(4*4*len(values)), C.GL_FALSE,
+		(*C.GLfloat)(&values[0][0][0]))
 }
 
 // UseProgram installs a program object as part of current rendering state.
