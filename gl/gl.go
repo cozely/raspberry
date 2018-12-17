@@ -90,9 +90,16 @@ func BlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha Enum) {
 // BufferData creates and initializes a buffer object's data store.
 //
 // http://docs.gl/es2/glBufferData
-func BufferData(target Enum, size uintptr, data *byte, usage Enum) {
-	C.glBufferData(C.GLenum(target), C.GLsizeiptr(size), unsafe.Pointer(data),
+func BufferData(target Enum, data []byte, usage Enum) {
+	C.glBufferData(C.GLenum(target), C.GLsizeiptr(len(data)), unsafe.Pointer(&data[0]),
 		C.GLenum(usage))
+}
+
+// BufferDataUnsafe creates and initializes a buffer object's data store.
+//
+// http://docs.gl/es2/glBufferData
+func BufferDataUnsafe(target Enum, size uintptr, data unsafe.Pointer, usage Enum) {
+	C.glBufferData(C.GLenum(target), C.GLsizeiptr(size), data, C.GLenum(usage))
 }
 
 // Clear clears buffers to preset values.
@@ -161,6 +168,70 @@ func CompressedTexImage2D(
 	)
 }
 
+// CompressedSubTexImage2D specifies a two-dimensional texture subimage in a
+// compressed format.
+//
+// http://docs.gl/es2/glCompressedTexSubImage2D
+func CompressedSubTexImage2D(
+	target Enum,
+	level int32,
+	xoffset, yoffset int32,
+	width, height int32,
+	format Enum,
+	imageSize int32,
+	data *byte,
+) {
+	C.glCompressedTexSubImage2D(
+		C.GLenum(target),
+		C.GLint(level),
+		C.GLint(xoffset), C.GLint(yoffset),
+		C.GLsizei(width), C.GLsizei(height),
+		C.GLenum(format),
+		C.GLsizei(imageSize),
+		unsafe.Pointer(data),
+	)
+}
+
+// CopyTexImage2D copies pixels into a 2D texture image.
+//
+// http://docs.gl/es2/glCopyTexImage2D
+func CopyTexImage2D(
+	target Enum,
+	level int32,
+	internalFormat Enum,
+	x, y int32,
+	width, height int32,
+	border int32,
+) {
+	C.glCopyTexImage2D(
+		C.GLenum(target),
+		C.GLint(level),
+		C.GLenum(internalFormat),
+		C.GLint(x), C.GLint(y),
+		C.GLsizei(width), C.GLsizei(height),
+		C.GLint(border),
+	)
+}
+
+// CopyTexSubImage2D copies pixels into a 2D texture subimage.
+//
+// http://docs.gl/es2/glCopyTexSubImage2D
+func CopyTexSubImage2D(
+	target Enum,
+	level int32,
+	xoffset, yoffset int32,
+	x, y int32,
+	width, height int32,
+) {
+	C.glCopyTexSubImage2D(
+		C.GLenum(target),
+		C.GLint(level),
+		C.GLint(xoffset), C.GLint(yoffset),
+		C.GLint(x), C.GLint(y),
+		C.GLsizei(width), C.GLsizei(height),
+	)
+}
+
 // CreateProgram creates a program object.
 //
 // http://docs.gl/es2/glCreateProgram
@@ -180,6 +251,13 @@ func CreateShader(shaderType Enum) Shader {
 // http://docs.gl/es2/glCullFace
 func CullFace(mode Enum) {
 	C.glCullFace(C.GLenum(mode))
+}
+
+// DeleteTextures deletes named textures.
+//
+// http://docs.gl/es2/glDeleteTextures
+func DeleteTextures(textures []Texture) {
+	C.glDeleteTextures(C.GLsizei(len(textures)), (*C.GLuint)(&textures[0]))
 }
 
 // DepthFunc specifies the value used for depth buffer comparisons.
@@ -257,16 +335,23 @@ func FrontFace(mode Enum) {
 	C.glFrontFace(C.GLenum(mode))
 }
 
-// GenBuffer generates a buffer object name
+// GenBuffers generates buffer object names.
 //
 // http://docs.gl/es2/glGenBuffers
-func GenBuffer() Buffer {
-	var b Buffer
-	C.glGenBuffers(1, (*C.GLuint)(&b))
+func GenBuffers(count int32) []Buffer {
+	b := make([]Buffer, count)
+	C.glGenBuffers(C.GLsizei(count), (*C.GLuint)(&b[0]))
 	return b
 }
 
-//TODO: func GenBuffers() []Buffer
+// GenTextures generate texture names.
+//
+// http://docs.gl/es2/glGenTextures
+func GenTextures(count int32) []Texture {
+	t := make([]Texture, count)
+	C.glGenTextures(C.GLsizei(count), (*C.GLuint)(&t[0]))
+	return t
+}
 
 // GetAttribLocation returns the location of an attribute variable.
 //
@@ -301,6 +386,7 @@ func GetError() Enum {
 //
 // http://docs.gl/es2/glGet
 func GetFloatv(pname Enum, dst []float32) {
+	//TODO: Use a slice return instead
 	C.glGetFloatv(C.GLenum(pname), (*C.GLfloat)(&dst[0]))
 }
 
@@ -308,21 +394,8 @@ func GetFloatv(pname Enum, dst []float32) {
 //
 // http://docs.gl/es2/glGet
 func GetIntegerv(pname Enum, dst []int32) {
+	//TODO: Use a slice return instead
 	C.glGetIntegerv(C.GLenum(pname), (*C.GLint)(&dst[0]))
-}
-
-// PixelStorei sets pixel storage modes.
-//
-// http://docs.gl/es2/glPixelStorei
-func PixelStorei(pname Enum, param int32) {
-	C.glPixelStorei(C.GLenum(pname), C.GLint(param))
-}
-
-// PolygonOffset sets the scale and units used to calculate depth values.
-//
-// http://docs.gl/es2/glPolygonOffset
-func PolygonOffset(factor, units float32) {
-	C.glPolygonOffset(C.GLfloat(factor), C.GLfloat(units))
 }
 
 // GetProgramInfoLog returns the information log for a program object.
@@ -358,6 +431,24 @@ func GetString(name Enum) string {
 	return C.GoString((*C.char)(C.glGetString(C.GLenum(name))))
 }
 
+// GetTexParameteriv returns texture integer parameter values.
+//
+// http://docs.gl/es2/glGetTexParameter
+func GetTexParameteriv(target Enum, pname Enum) []int32 {
+	v := []int32{0} //TODO: double-check that all parameters returns a single value
+	C.glGetTexParameteriv(C.GLenum(target), C.GLenum(pname), (*C.GLint)(&v[0]))
+	return v
+}
+
+// GetTexParameterfv returns texture float parameter values.
+//
+// http://docs.gl/es2/glGetTexParameter
+func GetTexParameterfv(target Enum, pname Enum) []float32 {
+	v := []float32{0} //TODO: double-check that all parameters returns a single value
+	C.glGetTexParameterfv(C.GLenum(target), C.GLenum(pname), (*C.GLfloat)(&v[0]))
+	return v
+}
+
 // Hint specifies implementation-specific hints.
 //
 // http://docs.gl/es2/glHint
@@ -373,6 +464,13 @@ func IsEnabled(cap Enum) bool {
 	return r == C.GL_TRUE
 }
 
+// IsTexture determines if a name corresponds to a texture.
+//
+// http://docs.gl/es2/glIsTexture
+func IsTexture(t Texture) bool {
+	return C.glIsTexture(C.GLuint(t)) == C.GL_TRUE
+}
+
 // LineWidth specifies the width of rasterized lines.
 //
 // http://docs.gl/es2/glLineWidth
@@ -385,6 +483,20 @@ func LineWidth(w float32) {
 // http://docs.gl/es2/glLinkProgram
 func LinkProgram(p Program) {
 	C.glLinkProgram(C.GLuint(p))
+}
+
+// PixelStorei sets pixel storage modes.
+//
+// http://docs.gl/es2/glPixelStorei
+func PixelStorei(pname Enum, param int32) {
+	C.glPixelStorei(C.GLenum(pname), C.GLint(param))
+}
+
+// PolygonOffset sets the scale and units used to calculate depth values.
+//
+// http://docs.gl/es2/glPolygonOffset
+func PolygonOffset(factor, units float32) {
+	C.glPolygonOffset(C.GLfloat(factor), C.GLfloat(units))
 }
 
 // SampleCoverage specifies multisample coverage parameters.
@@ -456,6 +568,132 @@ func StencilOp(sfail, dpfail, dppass Enum) {
 // http://docs.gl/es2/glStencilOp
 func StencilOpSeparate(face Enum, sfail, dpfail, dppass Enum) {
 	C.glStencilOpSeparate(C.GLenum(face), C.GLenum(sfail), C.GLenum(dpfail), C.GLenum(dppass))
+}
+
+// TexImage2D specifies a two-dimensional texture image.
+//
+// http://docs.gl/es2/glTexImage2D
+func TexImage2D(
+	target Enum,
+	level int32,
+	internalFormat Enum,
+	width, height int32,
+	border int32,
+	format Enum,
+	texeltype Enum,
+	data []byte,
+) {
+	C.glTexImage2D(
+		C.GLenum(target),
+		C.GLint(level),
+		C.GLint(internalFormat),
+		C.GLsizei(width), C.GLsizei(height),
+		C.GLint(border),
+		C.GLenum(format),
+		C.GLenum(texeltype),
+		unsafe.Pointer(&data[0]),
+	)
+}
+
+// TexImage2DUnsafe specifies a two-dimensional texture image.
+//
+// http://docs.gl/es2/glTexImage2D
+func TexImage2DUnsafe(
+	target Enum,
+	level int32,
+	internalFormat Enum,
+	width, height int32,
+	border int32,
+	format Enum,
+	texeltype Enum,
+	data unsafe.Pointer,
+) {
+	C.glTexImage2D(
+		C.GLenum(target),
+		C.GLint(level),
+		C.GLint(internalFormat),
+		C.GLsizei(width), C.GLsizei(height),
+		C.GLint(border),
+		C.GLenum(format),
+		C.GLenum(texeltype),
+		data,
+	)
+}
+
+// TexParameterf sets a float texture parameter.
+//
+// http://docs.gl/es2/glTexParameter
+func TexParameterf(target Enum, pname Enum, param float32) {
+	C.glTexParameterf(C.GLenum(target), C.GLenum(pname), C.GLfloat(param))
+}
+
+// TexParameterfv sets float texture parameters.
+//
+// http://docs.gl/es2/glTexParameter
+func TexParameterfv(target Enum, pname Enum, params []float32) {
+	C.glTexParameterfv(C.GLenum(target), C.GLenum(pname),
+		(*C.GLfloat)(&params[0]))
+}
+
+// TexParameteri sets an integer texture parameter.
+//
+// http://docs.gl/es2/glTexParameter
+func TexParameteri(target Enum, pname Enum, param int32) {
+	C.glTexParameteri(C.GLenum(target), C.GLenum(pname), C.GLint(param))
+}
+
+// TexParameteriv sets integer texture parameters.
+//
+// http://docs.gl/es2/glTexParameter
+func TexParameteriv(target Enum, pname Enum, params []int32) {
+	C.glTexParameteriv(C.GLenum(target), C.GLenum(pname),
+		(*C.GLint)(&params[0]))
+}
+
+// TexSubImage2D specifies a two-dimensional texture subimage.
+//
+// http://docs.gl/es2/glTexSubImage2D
+func TexSubImage2D(
+	target Enum,
+	level int32,
+	xoffset, yoffset int32,
+	width, height int32,
+	format Enum,
+	texeltype Enum,
+	data []byte,
+) {
+	C.glTexSubImage2D(
+		C.GLenum(target),
+		C.GLint(level),
+		C.GLint(xoffset), C.GLint(yoffset),
+		C.GLsizei(width), C.GLsizei(height),
+		C.GLenum(format),
+		C.GLenum(texeltype),
+		unsafe.Pointer(&data[0]),
+	)
+}
+
+// TexSubImage2DUnsafe specifies a two-dimensional texture subimage.
+//
+// http://docs.gl/es2/glTexSubImage2D
+func TexSubImage2DUnsafe(
+	target Enum,
+	level int32,
+	xoffset, yoffset int32,
+	width, height int32,
+	format Enum,
+	texeltype Enum,
+	data unsafe.Pointer,
+) {
+	C.glTexSubImage2D(
+		C.GLenum(target),
+		C.GLint(level),
+		C.GLint(xoffset), C.GLint(yoffset),
+		C.GLsizei(width), C.GLsizei(height),
+		C.GLenum(format),
+		C.GLenum(texeltype),
+		data,
+	)
 }
 
 // UseProgram installs a program object as part of current rendering state.

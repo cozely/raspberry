@@ -27,7 +27,7 @@ func initScreen() error {
 
 	screen.width, screen.height, err = bcm.GetDisplaySize(0)
 	if err != nil {
-		return fmt.Errorf("screenInit: %v", err)
+		return fmt.Errorf("initScreen: %v", err)
 	}
 
 	// Establish a connection with the display

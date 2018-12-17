@@ -10,10 +10,10 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 var pipeline struct {
-	program     gl.Program
+	program gl.Program
 	// framebuffer C.GLuint
 	// texture     C.GLuint
-	vbo         gl.Buffer
+	vbo gl.Buffer
 }
 
 var vshader = `
@@ -91,11 +91,11 @@ func createPipeline() error {
 
 	gl.Viewport(0, 0, screen.width, screen.height)
 
-	pipeline.vbo = gl.GenBuffer()
+	pipeline.vbo = gl.GenBuffers(1)[0]
 	checkgl()
 	gl.BindBuffer(gl.ARRAY_BUFFER, pipeline.vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, unsafe.Sizeof(vertices),
-		(*byte)(unsafe.Pointer(&vertices[0])), gl.STATIC_DRAW)
+	gl.BufferDataUnsafe(gl.ARRAY_BUFFER, unsafe.Sizeof(vertices),
+		unsafe.Pointer(&vertices[0]), gl.STATIC_DRAW)
 	a, ok := gl.GetAttribLocation(pipeline.program, "vertex")
 	if !ok {
 		log.Printf("*** unable to get location of attribute \"vertex\"")
