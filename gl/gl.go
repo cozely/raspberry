@@ -110,6 +110,22 @@ func BufferDataUnsafe(target Enum, size uintptr, data unsafe.Pointer, usage Enum
 	C.glBufferData(C.GLenum(target), C.GLsizeiptr(size), data, C.GLenum(usage))
 }
 
+// BufferSubData updates a subset of a buffer object's data store.
+//
+// http://docs.gl/es2/glBufferSubData
+func BufferSubData(target Enum, offset int32, data []byte, usage Enum) {
+	C.glBufferSubData(C.GLenum(target), C.GLintptr(offset),
+		C.GLsizeiptr(len(data)), unsafe.Pointer(&data[0]))
+}
+
+// BufferSubDataUnsafe updates a subset of a buffer object's data store.
+//
+// http://docs.gl/es2/glBufferSubData
+func BufferSubDataUnsafe(target Enum, offset, size uintptr, data unsafe.Pointer, usage Enum) {
+	C.glBufferSubData(C.GLenum(target), C.GLintptr(offset),
+		C.GLintptr(size), data)
+}
+
 // Clear clears buffers to preset values.
 //
 // http://docs.gl/es2/glClear
@@ -276,6 +292,13 @@ func CullFace(mode Enum) {
 	C.glCullFace(C.GLenum(mode))
 }
 
+// DeleteBuffers deletes named buffer objects.
+//
+// http://docs.gl/es2/glDeleteBuffers
+func DeleteBuffers(b []Buffer) {
+	C.glDeleteBuffers(C.GLsizei(len(b)), (*C.GLuint)(&b[0]))
+}
+
 // DeleteProgram deletes a program object.
 //
 // http://docs.gl/es2/glDeleteProgram
@@ -337,6 +360,13 @@ func Disable(cap Enum) {
 	C.glDisable(C.GLenum(cap))
 }
 
+// DisableVertexArray disables a generic vertex attribute array
+//
+// http://docs.gl/es2/glEnableVertexAttribArray
+func DisableVertexArray(a Attrib) {
+	C.glDisableVertexAttribArray(C.GLuint(a))
+}
+
 // DrawArrays renders primitives from array data.
 //
 // http://docs.gl/es2/glDrawArrays
@@ -351,11 +381,11 @@ func Enable(cap Enum) {
 	C.glEnable(C.GLenum(cap))
 }
 
-// EnableVertexAttribArray enables or disables a generic vertex attribute array.
+// EnableVertexAttribArray enables a generic vertex attribute array.
 //
 // http://docs.gl/es2/glEnableVertexAttribArray
-func EnableVertexAttribArray(index Attrib) {
-	C.glEnableVertexAttribArray(C.GLuint(index))
+func EnableVertexAttribArray(a Attrib) {
+	C.glEnableVertexAttribArray(C.GLuint(a))
 }
 
 // Finish blocks until all GL execution is complete.
@@ -417,6 +447,15 @@ func GetBooleanv(pname Enum, dst []bool) {
 	for i := range dst {
 		dst[i] = b[i] == C.GL_TRUE
 	}
+}
+
+// GetBufferParameteriv returns parameters of a buffer object.
+//
+// http://docs.gl/es2/glGetBufferParameteriv
+func GetBufferParameteriv(target Enum, value Enum) int32 {
+	var v C.GLint
+	C.glGetBufferParameteriv(C.GLenum(target), C.GLenum(value), &v)
+	return int32(v)
 }
 
 // GetError returns error information
@@ -514,11 +553,42 @@ func GetUniformLocation(p Program, name string) Uniform {
 	return Uniform(C.glGetUniformLocation(C.GLuint(p), C.CString(name)))
 }
 
+// GetVertexAttribfv returns a generic vertex attribute parameter.
+//
+// http://docs.gl/es2/glGetVertexAttrib
+func GetVertexAttribfv(a Attrib, pname Enum, params []float32) {
+	C.glGetVertexAttribfv(C.GLuint(a), C.GLenum(pname), (*C.GLfloat)(&params[0]))
+}
+
+// GetVertexAttribiv returns a generic vertex attribute parameter.
+//
+// http://docs.gl/es2/glGetVertexAttrib
+func GetVertexAttribiv(a Attrib, pname Enum, params []int32) {
+	C.glGetVertexAttribiv(C.GLuint(a), C.GLenum(pname), (*C.GLint)(&params[0]))
+}
+
+// GetVertexAttribPointerv returns the address of the specified generic vertex
+// attribute pointer.
+//
+// http://docs.gl/es2/glGetVertexAttribPointerv
+func GetVertexAttribPointerv(a Attrib, pname Enum) unsafe.Pointer {
+	var p unsafe.Pointer
+	C.glGetVertexAttribPointerv(C.GLuint(a), C.GLenum(pname), &p)
+	return p
+}
+
 // Hint specifies implementation-specific hints.
 //
 // http://docs.gl/es2/glHint
 func Hint(target, mode Enum) {
 	C.glHint(C.GLenum(target), C.GLenum(mode))
+}
+
+// IsBuffer determines if a name corresponds to a buffer object.
+//
+// http://docs.gl/es2/glIsBuffer
+func IsBuffer(b Buffer) bool {
+	return C.glIsBuffer(C.GLuint(b)) == C.GL_TRUE
 }
 
 // IsEnabled tests whether a capability is enabled.
@@ -818,8 +888,8 @@ func Uniform1iv(u Uniform, values []int32) {
 // object.
 //
 // http://docs.gl/es2/glUniform
-func Uniform2f(u Uniform, v0, v1 float32) {
-	C.glUniform2f(C.GLint(u), C.GLfloat(v0), C.GLfloat(v1))
+func Uniform2f(u Uniform, v [2]float32) {
+	C.glUniform2f(C.GLint(u), C.GLfloat(v[0]), C.GLfloat(v[1]))
 }
 
 // Uniform2fv specifies the value of a uniform variable for the current program
@@ -835,8 +905,8 @@ func Uniform2fv(u Uniform, values [][2]float32) {
 // object.
 //
 // http://docs.gl/es2/glUniform
-func Uniform2i(u Uniform, v0, v1 int32) {
-	C.glUniform2i(C.GLint(u), C.GLint(v0), C.GLint(v1))
+func Uniform2i(u Uniform, v [2]int32) {
+	C.glUniform2i(C.GLint(u), C.GLint(v[0]), C.GLint(v[1]))
 }
 
 // Uniform2iv specifies the value of a uniform variable for the current program
@@ -852,8 +922,8 @@ func Uniform2iv(u Uniform, values [][2]int32) {
 // object.
 //
 // http://docs.gl/es2/glUniform
-func Uniform3f(u Uniform, v0, v1, v2 float32) {
-	C.glUniform3f(C.GLint(u), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2))
+func Uniform3f(u Uniform, v [3]float32) {
+	C.glUniform3f(C.GLint(u), C.GLfloat(v[0]), C.GLfloat(v[1]), C.GLfloat(v[2]))
 }
 
 // Uniform3fv specifies the value of a uniform variable for the current program
@@ -869,8 +939,8 @@ func Uniform3fv(u Uniform, values [][3]float32) {
 // object.
 //
 // http://docs.gl/es2/glUniform
-func Uniform3i(u Uniform, v0, v1, v2 int32) {
-	C.glUniform3i(C.GLint(u), C.GLint(v0), C.GLint(v1), C.GLint(v2))
+func Uniform3i(u Uniform, v [3]int32) {
+	C.glUniform3i(C.GLint(u), C.GLint(v[0]), C.GLint(v[1]), C.GLint(v[2]))
 }
 
 // Uniform3iv specifies the value of a uniform variable for the current program
@@ -886,9 +956,9 @@ func Uniform3iv(u Uniform, values [][3]int32) {
 // object.
 //
 // http://docs.gl/es2/glUniform
-func Uniform4f(u Uniform, v0, v1, v2, v3 float32) {
-	C.glUniform4f(C.GLint(u), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2),
-		C.GLfloat(v3))
+func Uniform4f(u Uniform, v [4]float32) {
+	C.glUniform4f(C.GLint(u), C.GLfloat(v[0]), C.GLfloat(v[1]), C.GLfloat(v[2]),
+		C.GLfloat(v[3]))
 }
 
 // Uniform4fv specifies the value of a uniform variable for the current program
@@ -904,9 +974,9 @@ func Uniform4fv(u Uniform, values [][4]float32) {
 // object.
 //
 // http://docs.gl/es2/glUniform
-func Uniform4i(u Uniform, v0, v1, v2, v3 int32) {
-	C.glUniform4i(C.GLint(u), C.GLint(v0), C.GLint(v1), C.GLint(v2),
-		C.GLint(v3))
+func Uniform4i(u Uniform, v [4]int32) {
+	C.glUniform4i(C.GLint(u), C.GLint(v[0]), C.GLint(v[1]), C.GLint(v[2]),
+		C.GLint(v[3]))
 }
 
 // Uniform4iv specifies the value of a uniform variable for the current program
@@ -979,15 +1049,45 @@ func UseProgram(p Program) {
 	C.glUseProgram(C.GLuint(p))
 }
 
+// VertexAttrib1f specifies the value of a generic vertex attribute.
+//
+// http://docs.gl/es2/glVertexAttrib
+func VertexAttrib1f(a Attrib, v float32) {
+	C.glVertexAttrib1f(C.GLuint(a), C.GLfloat(v))
+}
+
+// VertexAttrib2f specifies the value of a generic vertex attribute.
+//
+// http://docs.gl/es2/glVertexAttrib
+func VertexAttrib2f(a Attrib, v [2]float32) {
+	C.glVertexAttrib2f(C.GLuint(a), C.GLfloat(v[0]), C.GLfloat(v[1]))
+}
+
+// VertexAttrib3f specifies the value of a generic vertex attribute.
+//
+// http://docs.gl/es2/glVertexAttrib
+func VertexAttrib3f(a Attrib, v [3]float32) {
+	C.glVertexAttrib3f(C.GLuint(a), C.GLfloat(v[0]), C.GLfloat(v[1]),
+		C.GLfloat(v[2]))
+}
+
+// VertexAttrib4f specifies the value of a generic vertex attribute.
+//
+// http://docs.gl/es2/glVertexAttrib
+func VertexAttrib4f(a Attrib, v [4]float32) {
+	C.glVertexAttrib4f(C.GLuint(a), C.GLfloat(v[0]), C.GLfloat(v[1]),
+		C.GLfloat(v[2]), C.GLfloat(v[3]))
+}
+
 // VertexAttribPointer defines an array of generic vertex attribute data.
 //
 // http://docs.gl/es2/glVertexAttribPointer
-func VertexAttribPointer(index Attrib, size int32, typ Enum, normalized bool, stride, offset uintptr) {
+func VertexAttribPointer(a Attrib, size int32, typ Enum, normalized bool, stride, offset uintptr) {
 	n := C.GLboolean(FALSE)
 	if normalized {
 		n = C.GLboolean(TRUE)
 	}
-	C.glVertexAttribPointer(C.GLuint(index), C.GLint(size), C.GLenum(typ),
+	C.glVertexAttribPointer(C.GLuint(a), C.GLint(size), C.GLenum(typ),
 		n, C.GLsizei(stride), unsafe.Pointer(offset))
 }
 
