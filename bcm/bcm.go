@@ -32,3 +32,7 @@ func GetDisplaySize(display uint16) (w, h int32, err error) {
 	w, h = int32(ww), int32(hh)
 	return w, h, nil
 }
+
+func GetPeripheralAddress() uintptr {
+	return uintptr(C.bcm_host_get_peripheral_address())
+}
