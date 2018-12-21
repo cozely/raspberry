@@ -100,62 +100,84 @@ const (
 	GPREN0    = 0x4C / 4
 	GPFEN0    = 0x58 / 4
 	GPHEN0    = 0x64 / 4
+	GPLEN0    = 0x70 / 4
 	GPAREN0   = 0x7C / 4
 	GPAFEN0   = 0x88 / 4
-	GPLEN0    = 0x70 / 4
 	GPPUD     = 0x94 / 4
 	GPPUDCLK0 = 0x98 / 4
 )
 
 //------------------------------------------------------------------------------
 
-// Mode is the function selected for a pin.
-type Mode uint32
-
-// All valid modes.
-const (
-	Input  = Mode(0)
-	Output = Mode(1)
-	Alt0   = Mode(4)
-	Alt1   = Mode(5)
-	Alt2   = Mode(6)
-	Alt3   = Mode(7)
-	Alt4   = Mode(3)
-	Alt5   = Mode(2)
-)
-
-func (m Mode) String() string {
-	switch m {
-	case Input:
+// Mode returns the current mode of a pin.
+func Mode(p Pin) string {
+	switch (Registers[p/10] >> ((p % 10) * 3)) & 0x7 {
+	case 0:
 		return "input"
-	case Output:
+	case 1:
 		return "output"
-	case Alt0:
+	case 4:
 		return "alt0"
-	case Alt1:
+	case 5:
 		return "alt1"
-	case Alt2:
+	case 6:
 		return "alt2"
-	case Alt3:
+	case 7:
 		return "alt3"
-	case Alt4:
+	case 3:
 		return "alt4"
-	case Alt5:
+	case 2:
 		return "alt5"
 	default:
 		return "invalid"
 	}
 }
 
-// SetMode sets the mode of a pin.
-func SetMode(p Pin, m Mode) {
+// Input configures a pin to input mode.
+func Input(p Pin) {
 	Registers[p/10] &= ^(0x7 << ((p % 10) * 3))
-	Registers[p/10] |= uint32(m) << ((p % 10) * 3)
 }
 
-// GetMode returns the mode of a pin.
-func GetMode(p Pin) Mode {
-	return Mode((Registers[p/10] >> ((p % 10) * 3)) & 0x7)
+// Output configures a pin to output mode.
+func Output(p Pin) {
+	Registers[p/10] &= ^(0x7 << ((p % 10) * 3))
+	Registers[p/10] |= 1 << ((p % 10) * 3)
+}
+
+// Function0 sets the mode of a pin.
+func Function0(p Pin) {
+	Registers[p/10] &= ^(0x7 << ((p % 10) * 3))
+	Registers[p/10] |= 4 << ((p % 10) * 3)
+}
+
+// Function1 sets the mode of a pin.
+func Function1(p Pin) {
+	Registers[p/10] &= ^(0x7 << ((p % 10) * 3))
+	Registers[p/10] |= 5 << ((p % 10) * 3)
+}
+
+// Function2 sets the mode of a pin.
+func Function2(p Pin) {
+	Registers[p/10] &= ^(0x7 << ((p % 10) * 3))
+	Registers[p/10] |= 6 << ((p % 10) * 3)
+}
+
+// Function3 sets the mode of a pin.
+func Function3(p Pin) {
+	Registers[p/10] &= ^(0x7 << ((p % 10) * 3))
+	Registers[p/10] |= 7 << ((p % 10) * 3)
+}
+
+// Function4 sets the mode of a pin.
+func Function4(p Pin) {
+	Registers[p/10] &= ^(0x7 << ((p % 10) * 3))
+	Registers[p/10] |= 3 << ((p % 10) * 3)
+}
+
+// Function5 sets the mode of a pin.
+func Function5(p Pin) {
+	Registers[p/10] &= ^(0x7 << ((p % 10) * 3))
+	Registers[p/10] |= 2 << ((p % 10) * 3)
 }
 
 //------------------------------------------------------------------------------
@@ -222,5 +244,50 @@ func Toggle(p Pin) {
 		Registers[GPSET0] = 1 << p
 	} else {
 		Registers[GPCLR0] = 1 << p
+	}
+}
+
+//------------------------------------------------------------------------------
+
+func Event(p Pin) bool {
+	result := Registers[GPEDS0]&(1<<p) != 0
+	// Registers[GPEDS0] |= 1 << p
+	return result
+}
+
+func PeekEvent(p Pin) bool {
+	return Registers[GPEDS0]&(1<<p) != 0
+}
+
+func Detect(high, low, rising, falling, arising, afalling bool, p Pin) {
+	if high {
+		Registers[GPHEN0] |= 1 << p
+	} else {
+		Registers[GPHEN0] &= ^(1 << p)
+	}
+	if low {
+		Registers[GPLEN0] |= 1 << p
+	} else {
+		Registers[GPLEN0] &= ^(1 << p)
+	}
+	if rising {
+		Registers[GPREN0] |= 1 << p
+	} else {
+		Registers[GPREN0] &= ^(1 << p)
+	}
+	if falling {
+		Registers[GPFEN0] |= 1 << p
+	} else {
+		Registers[GPFEN0] &= ^(1 << p)
+	}
+	if arising {
+		Registers[GPAREN0] |= 1 << p
+	} else {
+		Registers[GPAREN0] &= ^(1 << p)
+	}
+	if afalling {
+		Registers[GPAFEN0] |= 1 << p
+	} else {
+		Registers[GPAFEN0] &= ^(1 << p)
 	}
 }
