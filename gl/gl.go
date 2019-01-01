@@ -42,6 +42,13 @@ func BindAttribLocation(p Program, index uint32, name string) {
 	C.glBindAttribLocation(C.GLuint(p), C.GLuint(index), C.CString(name))
 }
 
+// BindRenderbuffer binds a named renderbuffer object.
+//
+// http://docs.gl/es2/glBindRenderbuffer
+func BindRenderbuffer(target Enum, rb Renderbuffer) {
+	C.glBindRenderbuffer(C.GLenum(target), C.GLuint(rb))
+}
+
 // BindBuffer binds a named buffer object.
 //
 // http://docs.gl/es2/glBindBuffer
@@ -124,6 +131,12 @@ func BufferSubData(target Enum, offset int32, data []byte, usage Enum) {
 func BufferSubDataUnsafe(target Enum, offset, size uintptr, data unsafe.Pointer, usage Enum) {
 	C.glBufferSubData(C.GLenum(target), C.GLintptr(offset),
 		C.GLintptr(size), data)
+}
+
+// CheckFramebufferStatus returns the framebuffer completeness status of a
+// framebuffer object.
+func CheckFramebufferStatus(target Enum) Enum {
+	return Enum(C.glCheckFramebufferStatus(C.GLenum(target)))
 }
 
 // Clear clears buffers to preset values.
@@ -299,11 +312,25 @@ func DeleteBuffers(b []Buffer) {
 	C.glDeleteBuffers(C.GLsizei(len(b)), (*C.GLuint)(&b[0]))
 }
 
+// DeleteFramebuffers deletes named framebuffer objects.
+//
+// http://docs.gl/es2/glDeleteFramebuffers
+func DeleteFramebuffers(fb []Framebuffer) {
+	C.glDeleteFramebuffers(C.GLsizei(len(fb)), (*C.GLuint)(&fb[0]))
+}
+
 // DeleteProgram deletes a program object.
 //
 // http://docs.gl/es2/glDeleteProgram
 func DeleteProgram(p Program) {
 	C.glDeleteProgram(C.GLuint(p))
+}
+
+// DeleteRenderbuffers deletes named renderbuffer objects.
+//
+// http://docs.gl/es2/glDeleteRenderbuffers
+func DeleteRenderbuffers(rb []Renderbuffer) {
+	C.glDeleteRenderbuffers(C.GLsizei(len(rb)), (*C.GLuint)(&rb[0]))
 }
 
 // DeleteShader deletes a shader object.
@@ -402,6 +429,43 @@ func Flush() {
 	C.glFlush()
 }
 
+// FramebufferRenderbuffer attaches a renderbuffer object to a framebuffer
+// object.
+//
+// http://docs.gl/es2/glFramebufferRenderbuffer
+func FramebufferRenderbuffer(
+	target Enum,
+	attachment Enum,
+	renderbuffertarget Enum,
+	rb Renderbuffer,
+) {
+	C.glFramebufferRenderbuffer(
+		C.GLenum(target),
+		C.GLenum(attachment),
+		C.GLenum(renderbuffertarget),
+		C.GLuint(rb),
+	)
+}
+
+// FramebufferTexture2D attaches a texture image to a framebuffer object.
+//
+// http://docs.gl/es2/glFramebufferTexture2D
+func FramebufferTexture2D(
+	target Enum,
+	attachment Enum,
+	textarget Enum,
+	t Texture,
+	level int32,
+) {
+	C.glFramebufferTexture2D(
+		C.GLenum(target),
+		C.GLenum(attachment),
+		C.GLenum(textarget),
+		C.GLuint(t),
+		C.GLint(level),
+	)
+}
+
 // FrontFace defines front- and back-facing polygons.
 //
 // http://docs.gl/es2/glFrontFace
@@ -416,6 +480,31 @@ func GenBuffers(count int32) []Buffer {
 	b := make([]Buffer, count)
 	C.glGenBuffers(C.GLsizei(count), (*C.GLuint)(&b[0]))
 	return b
+}
+
+// GenerateMipmap generates a complete set of mipmaps for a texture object.
+//
+// http://docs.gl/es2/glGenerateMipmap
+func GenerateMipmap(target Enum) {
+	C.glGenerateMipmap(C.GLenum(target))
+}
+
+// GenFramebuffers generates framebuffer object names.
+//
+// http://docs.gl/es2/glGenFramebuffers
+func GenFramebuffers(count int32) []Framebuffer {
+	fb := make([]Framebuffer, count)
+	C.glGenFramebuffers(C.GLsizei(count), (*C.GLuint)(&fb[0]))
+	return fb
+}
+
+// GenRenderbuffers generates renderbuffer object names.
+//
+// http://docs.gl/es2/glGenRenderbuffers
+func GenRenderbuffers(count int32) []Renderbuffer {
+	rb := make([]Renderbuffer, count)
+	C.glGenRenderbuffers(C.GLsizei(count), (*C.GLuint)(&rb[0]))
+	return rb
 }
 
 // GenTextures generate texture names.
@@ -473,6 +562,24 @@ func GetFloatv(pname Enum, dst []float32) {
 	C.glGetFloatv(C.GLenum(pname), (*C.GLfloat)(&dst[0]))
 }
 
+// GetFramebufferAttachmentParameteriv returns attachment parameters of a
+// framebuffer object.
+//
+// http://docs.gl/es2/glGetFramebufferAttachmentParameteriv
+func GetFramebufferAttachmentParameteriv(
+	target Enum,
+	attachment Enum,
+	pname Enum,
+	dst []int32,
+) {
+	C.glGetFramebufferAttachmentParameteriv(
+		C.GLenum(target),
+		C.GLenum(attachment),
+		C.GLenum(pname),
+		(*C.GLint)(&dst[0]),
+	)
+}
+
 // GetIntegerv returns the value or values of a selected parameter.
 //
 // http://docs.gl/es2/glGet
@@ -492,6 +599,21 @@ func GetProgramInfoLog(p Program) string {
 		&logbuf[0],
 	)
 	return C.GoString(&logbuf[0])
+}
+
+// GetRenderbufferParameteriv returns parameters of a renderbuffer object.
+//
+// http://docs.gl/es2/glGetRenderbufferParameteriv
+func GetRenderbufferParameteriv(
+	target Enum,
+	pname Enum,
+	dst []int32,
+) {
+	C.glGetRenderbufferParameteriv(
+		C.GLenum(target),
+		C.GLenum(pname),
+		(*C.GLint)(&dst[0]),
+	)
 }
 
 // GetShaderInfoLog returns the information log for a shader object.
@@ -587,7 +709,7 @@ func Hint(target, mode Enum) {
 // IsBuffer determines if a name corresponds to a buffer object.
 //
 // http://docs.gl/es2/glIsBuffer
-func IsBuffer(b Buffer) bool {
+func IsBuffer(b uint32) bool {
 	return C.glIsBuffer(C.GLuint(b)) == C.GL_TRUE
 }
 
@@ -599,10 +721,24 @@ func IsEnabled(cap Enum) bool {
 	return r == C.GL_TRUE
 }
 
+// IsFramebuffer determines if a name corresponds to a framebuffer object.
+//
+// http://docs.gl/es2/glIsFramebuffer
+func IsFramebuffer(fb uint32) bool {
+	return C.glIsFramebuffer(C.GLuint(fb)) == C.GL_TRUE
+}
+
+// IsRenderbuffer determines if a name corresponds to a renderbuffer object.
+//
+// http://docs.gl/es2/glIsRenderbuffer
+func IsRenderbuffer(rb uint32) bool {
+	return C.glIsRenderbuffer(C.GLuint(rb)) == C.GL_TRUE
+}
+
 // IsTexture determines if a name corresponds to a texture.
 //
 // http://docs.gl/es2/glIsTexture
-func IsTexture(t Texture) bool {
+func IsTexture(t uint32) bool {
 	return C.glIsTexture(C.GLuint(t)) == C.GL_TRUE
 }
 
@@ -650,6 +786,23 @@ func ReadPixels(
 		C.GLenum(format),
 		C.GLenum(pixeltype),
 		unsafe.Pointer(&data[0]),
+	)
+}
+
+// RenderbufferStorage creates and initialize a renderbuffer object's data
+// store.
+//
+// http://docs.gl/es2/glRenderbufferStorage
+func RenderbufferStorage(
+	target Enum,
+	internalFormat Enum,
+	width, height int32,
+) {
+	C.glRenderbufferStorage(
+		C.GLenum(target),
+		C.GLenum(internalFormat),
+		C.GLsizei(width),
+		C.GLsizei(height),
 	)
 }
 
