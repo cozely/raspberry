@@ -897,16 +897,29 @@ func TexImage2D(
 	texeltype Enum,
 	data []byte,
 ) {
-	C.glTexImage2D(
-		C.GLenum(target),
-		C.GLint(level),
-		C.GLint(internalFormat),
-		C.GLsizei(width), C.GLsizei(height),
-		C.GLint(border),
-		C.GLenum(format),
-		C.GLenum(texeltype),
-		unsafe.Pointer(&data[0]),
-	)
+	if data == nil || len(data) < 1 {
+		C.glTexImage2D(
+			C.GLenum(target),
+			C.GLint(level),
+			C.GLint(internalFormat),
+			C.GLsizei(width), C.GLsizei(height),
+			C.GLint(border),
+			C.GLenum(format),
+			C.GLenum(texeltype),
+			unsafe.Pointer(nil),
+		)
+	} else {
+		C.glTexImage2D(
+			C.GLenum(target),
+			C.GLint(level),
+			C.GLint(internalFormat),
+			C.GLsizei(width), C.GLsizei(height),
+			C.GLint(border),
+			C.GLenum(format),
+			C.GLenum(texeltype),
+			unsafe.Pointer(&data[0]),
+		)
+	}
 }
 
 // TexImage2DUnsafe specifies a two-dimensional texture image.
