@@ -42,11 +42,11 @@ func BindAttribLocation(p Program, index uint32, name string) {
 	C.glBindAttribLocation(C.GLuint(p), C.GLuint(index), C.CString(name))
 }
 
-// BindRenderbuffer binds a named renderbuffer object.
+// BindFramebuffer binds a named framebuffer object.
 //
-// http://docs.gl/es2/glBindRenderbuffer
-func BindRenderbuffer(target Enum, rb Renderbuffer) {
-	C.glBindRenderbuffer(C.GLenum(target), C.GLuint(rb))
+// http://docs.gl/es2/glBindFramebuffer
+func BindFramebuffer(target Enum, fb Framebuffer) {
+	C.glBindFramebuffer(C.GLenum(target), C.GLuint(fb))
 }
 
 // BindBuffer binds a named buffer object.
@@ -54,6 +54,13 @@ func BindRenderbuffer(target Enum, rb Renderbuffer) {
 // http://docs.gl/es2/glBindBuffer
 func BindBuffer(target Enum, b Buffer) {
 	C.glBindBuffer(C.GLenum(target), C.GLuint(b))
+}
+
+// BindRenderbuffer binds a named renderbuffer object.
+//
+// http://docs.gl/es2/glBindRenderbuffer
+func BindRenderbuffer(target Enum, rb Renderbuffer) {
+	C.glBindRenderbuffer(C.GLenum(target), C.GLuint(rb))
 }
 
 // BindTexture binds a named texture to a texturing target.
