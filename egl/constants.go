@@ -29,7 +29,7 @@ const (
 // Out-of-band handle values
 var (
 	DEFAULT_DISPLAY = NativeDisplay(nil)
-	NO_DISPLAY      = Display(nil)
+	NO_DISPLAY      = Display(0)
 	NO_CONTEXT      = Context(nil)
 	NO_SURFACE      = Surface(nil)
 )
