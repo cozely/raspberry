@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 
+	"github.com/cozely/journal"
+
 	"github.com/cozely/raspberry/framebuffer"
 )
 
@@ -11,8 +13,14 @@ import (
 func main() {
 	err := framebuffer.Setup()
 	if err != nil {
-		panic(err)
+		journal.Panic(err)
 	}
 	defer framebuffer.Cleanup()
-	<-time.After(5 * time.Second)
+	<-time.After(1 * time.Second)
+	framebuffer.Swap()
+	<-time.After(1 * time.Second)
+	framebuffer.Swap()
+	<-time.After(1 * time.Second)
+	framebuffer.Swap()
+	<-time.After(1 * time.Second)
 }

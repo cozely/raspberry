@@ -1,39 +1,44 @@
 package framebuffer
 
 import (
-	"fmt"
 	"unsafe"
 
+	"github.com/cozely/journal"
 	"golang.org/x/sys/unix"
 )
 
 //------------------------------------------------------------------------------
 
+// Info is the journal used to log informations.
+var Info = journal.New(journal.Stdout, "")
+
 var (
+	fbfd     int
 	originfo fb_var_screeninfo
 	varinfo  fb_var_screeninfo
 	fixinfo  fb_fix_screeninfo
+	frames   [2]uint32
+	memory   []byte
 )
 
 //------------------------------------------------------------------------------
 
+// Setup prepares the framebuffer.
 func Setup() error {
-	f, err := unix.Open("/dev/fb0", unix.O_RDWR, 0)
+	var err error
+
+	//TODO: support choosing framebuffer number
+	fbfd, err = unix.Open("/dev/fb0", unix.O_RDWR, 0)
 	if err != nil {
-		panic(err)
+		return wrap("unable to open /dev/fb0", err)
 	}
-	defer unix.Close(f)
 
 	// First, get the current state of the framebuffer
-	err = ioctl(f, _FBIOGET_VSCREENINFO, unsafe.Pointer(&originfo))
+	err = ioctl(fbfd, _FBIOGET_VSCREENINFO, unsafe.Pointer(&originfo))
 	if err != nil {
-		panic(err) //TODO
+		return wrap("unable to get current framebuffer state", err)
 	}
-	fmt.Printf("Resolution: %dx%d(%d), virtual: %dx%d +%d+%d\n",
-		originfo.xres, originfo.yres,
-		originfo.bits_per_pixel,
-		originfo.xres_virtual, originfo.yres_virtual,
-		originfo.xoffset, originfo.yoffset)
+	frames = [2]uint32{0, originfo.yres}
 
 	// Modify it to fit our needs
 	varinfo = originfo
@@ -41,51 +46,41 @@ func Setup() error {
 	varinfo.yres_virtual = 2 * varinfo.yres
 	varinfo.xoffset = 0
 	varinfo.yoffset = 0
-	err = ioctl(f, _FBIOPUT_VSCREENINFO, unsafe.Pointer(&varinfo))
+	varinfo.bits_per_pixel = 32
+	err = ioctl(fbfd, _FBIOPUT_VSCREENINFO, unsafe.Pointer(&varinfo))
 	if err != nil {
-		panic(err) //TODO
+		return wrap("unable to change framebuffer state", err)
 	}
-	err = ioctl(f, _FBIOGET_VSCREENINFO, unsafe.Pointer(&varinfo))
+	err = ioctl(fbfd, _FBIOGET_VSCREENINFO, unsafe.Pointer(&varinfo))
 	if err != nil {
-		panic(err) //TODO
+		return wrap("unable to get current framebuffer state", err)
 	}
-	fmt.Printf("Resolution: %dx%d(%d), virtual: %dx%d +%d+%d\n",
-		varinfo.xres, varinfo.yres,
-		varinfo.bits_per_pixel,
-		varinfo.xres_virtual, varinfo.yres_virtual,
-		varinfo.xoffset, varinfo.yoffset)
+	//TODO: check if new state is correct
 
 	// Findout framebuffer size and stride
-	err = ioctl(f, _FBIOGET_FSCREENINFO, unsafe.Pointer(&fixinfo))
+	err = ioctl(fbfd, _FBIOGET_FSCREENINFO, unsafe.Pointer(&fixinfo))
 	if err != nil {
-		panic(err) //TODO
+		return wrap("unable to get framebuffer fixed info", err)
 	}
-	fmt.Printf("Framebuffer ID: %s\n", string(fixinfo.id[:]))
-	fmt.Printf("fscreeninfo.smem_len: %d\n", fixinfo.smem_len)
-	fmt.Printf("fscreeninfo.line_length: %d\n", fixinfo.line_length)
 
-	varinfo.yoffset = varinfo.yres
-	err = ioctl(f, _FBIOPAN_DISPLAY, unsafe.Pointer(&varinfo))
-	if err != nil {
-		panic(err) //TODO
-	}
-	err = ioctl(f, _FBIOGET_VSCREENINFO, unsafe.Pointer(&varinfo))
-	if err != nil {
-		panic(err) //TODO
-	}
-	fmt.Printf("Resolution: %dx%d(%d), virtual: %dx%d +%d+%d\n",
+	Info.Printf("\"%s\" resolution: %dx%d(%d), virtual: %dx%d +%d+%d, size %d, stride %d\n",
+		fixinfo.id,
 		varinfo.xres, varinfo.yres,
 		varinfo.bits_per_pixel,
 		varinfo.xres_virtual, varinfo.yres_virtual,
-		varinfo.xoffset, varinfo.yoffset)
+		varinfo.xoffset, varinfo.yoffset,
+		fixinfo.smem_len, fixinfo.line_length)
 
-	// m, err := unix.Mmap(
-	// 	f,
-	// 	0,
-	// 	int(unsafe.Sizeof(*Registers)),
-	// 	unix.PROT_READ|unix.PROT_WRITE,
-	// 	unix.MAP_SHARED,
-	// )
+	memory, err = unix.Mmap(
+		fbfd,
+		0,
+		int(fixinfo.smem_len),
+		unix.PROT_READ|unix.PROT_WRITE,
+		unix.MAP_SHARED,
+	)
+	if err != nil {
+		wrap("unable to memory-map the frambuffer", err)
+	}
 	// Registers = (*[41]uint32)(unsafe.Pointer(&m[0]))
 
 	return nil
@@ -93,35 +88,25 @@ func Setup() error {
 
 //------------------------------------------------------------------------------
 
-func Cleanup() error {
-	f, err := unix.Open("/dev/fb0", unix.O_RDWR, 0)
+func Swap() error {
+	frames[0], frames[1] = frames[1], frames[0]
+	varinfo.yoffset = frames[0]
+	err := ioctl(fbfd, _FBIOPAN_DISPLAY, unsafe.Pointer(&varinfo))
 	if err != nil {
-		panic(err)
+		return wrap("unable to switch framebuffer page", err)
 	}
-	defer unix.Close(f)
-
-	err = ioctl(f, _FBIOPUT_VSCREENINFO, unsafe.Pointer(&originfo))
-	if err != nil {
-		return fmt.Errorf("Unable to clean up framebuffer state: %v", err)
-	}
-	err = ioctl(f, _FBIOGET_VSCREENINFO, unsafe.Pointer(&varinfo))
-	if err != nil {
-		panic(err) //TODO
-	}
-	fmt.Printf("Resolution: %dx%d(%d), virtual: %dx%d +%d+%d\n",
-		varinfo.xres, varinfo.yres,
-		varinfo.bits_per_pixel,
-		varinfo.xres_virtual, varinfo.yres_virtual,
-		varinfo.xoffset, varinfo.yoffset)
-
-	err = ioctl(f, _FBIOGET_FSCREENINFO, unsafe.Pointer(&fixinfo))
-	if err != nil {
-		panic(err) //TODO
-	}
-	fmt.Printf("Framebuffer ID: %s\n", string(fixinfo.id[:]))
-	fmt.Printf("fscreeninfo.smem_start: %d\n", fixinfo.smem_start)
-	fmt.Printf("fscreeninfo.smem_len: %d\n", fixinfo.smem_len)
-	fmt.Printf("fscreeninfo.line_length: %d\n", fixinfo.line_length)
-
 	return nil
+}
+
+//------------------------------------------------------------------------------
+
+func Cleanup() {
+	err := ioctl(fbfd, _FBIOPUT_VSCREENINFO, unsafe.Pointer(&originfo))
+	if err != nil {
+		journal.Printf("Unable to clean up framebuffer state: %v", err)
+	}
+
+	unix.Close(fbfd)
+
+	Info.Print("Previous state restored.")
 }
